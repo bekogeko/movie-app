@@ -48,6 +48,14 @@ export default function Home({ searchParams }: PageProps<"/">) {
           →
         </span>
       </Link>
+
+      <section className="grid gap-4 sm:grid-cols-2">
+        <ErrorBoundary title="Couldn't reach Neo4j">
+          <Suspense fallback={<StatCardSkeleton label="Movies in the database" />}>
+            <NodeCount />
+          </Suspense>
+        </ErrorBoundary>
+      </section>
     </main>
   )
 }
