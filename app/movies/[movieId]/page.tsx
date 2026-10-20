@@ -1,12 +1,18 @@
 import type { Metadata } from "next"
-import { notFound } from "next/navigation"
+import { notFound, unstable_rethrow } from "next/navigation"
 import { Suspense } from "react"
 
 import ErrorBoundary from "@/components/error-boundary"
 import { MovieCredits, MovieCreditsSkeleton } from "@/components/movie-credits"
 import { MoviePoster, MoviePosterSkeleton } from "@/components/movie-poster"
-import { displayTitle, getMovie, type MovieDetails } from "@/lib/data/movies"
-import { formatDate } from "@/lib/format"
+import {
+  CommunityRating,
+  FansAlsoLoved,
+  HowItRanks,
+  SectionSkeleton,
+} from "@/components/movie-stats"
+import { getMovie, type MovieDetails } from "@/lib/data/movies"
+import { displayTitle, formatDate } from "@/lib/format"
 
 // Poster width: w-40 on phones, sm:w-48 from 640px up. Keep POSTER_SIZES in sync.
 const POSTER_WIDTH = "w-40 shrink-0 sm:w-48"
@@ -18,11 +24,17 @@ export async function generateMetadata({
   const { movieId } = await params
   try {
     const movie = await getMovie(movieId)
-    return { title: movie ? displayTitle(movie.title) : "Movie not found" }
-  } catch {
+    if (!movie) return { title: "Movie not found · Movie App" }
+    const year = movie.year !== null ? ` (${movie.year})` : ""
+    return {
+      title: `${displayTitle(movie.title)}${year} · Movie App`,
+      description: movie.plot ?? undefined,
+    }
+  } catch (error) {
     // A failed query here would replace the whole page with Next's error
     // screen. Fall back to the layout's title and let the page's
     // ErrorBoundary report the problem instead.
+    unstable_rethrow(error)
     return {}
   }
 }
@@ -46,6 +58,7 @@ async function Movie({ movieId }: { movieId: string }) {
   const movie = await getMovie(movieId)
   if (!movie) notFound()
   const title = displayTitle(movie.title)
+  const genres = movie.genres.filter((genre) => genre !== "(no genres listed)")
 
   return (
     <article className="flex flex-col gap-10">
@@ -59,7 +72,19 @@ async function Movie({ movieId }: { movieId: string }) {
 
         <div className="flex flex-col gap-6">
           <header className="flex flex-col gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-3xl font-semibold tracking-tight">
+                {title}
+                {movie.year !== null && (
+                  <span className="ml-3 font-mono text-xl font-normal tabular-nums text-zinc-500">
+                    {movie.year}
+                  </span>
+                )}
+              </h1>
+              {genres.length > 0 && (
+                <p className="text-sm text-zinc-500">{genres.join(" · ")}</p>
+              )}
+            </div>
             <Rating movie={movie} />
           </header>
 
@@ -68,6 +93,8 @@ async function Movie({ movieId }: { movieId: string }) {
               {movie.plot}
             </p>
           )}
+
+          <People movie={movie} />
         </div>
       </div>
 
@@ -87,13 +114,51 @@ async function Movie({ movieId }: { movieId: string }) {
         />
       </dl>
 
-      {/* Streams in after the movie; a failure here leaves the rest of the page up. */}
+      {/* Each section below loads and fails on its own, so one slow query doesn't hold up the rest. */}
       <ErrorBoundary title="Couldn't load the cast">
         <Suspense fallback={<MovieCreditsSkeleton />}>
           <MovieCredits movieId={movie.movieId} />
         </Suspense>
       </ErrorBoundary>
+
+      <ErrorBoundary title="Couldn't load the community rating">
+        <Suspense fallback={<SectionSkeleton title="Community rating" height="h-72" />}>
+          <CommunityRating movieId={movieId} />
+        </Suspense>
+      </ErrorBoundary>
+
+      <ErrorBoundary title="Couldn't load the rankings">
+        <Suspense fallback={<SectionSkeleton title="How it ranks" />}>
+          <HowItRanks movieId={movieId} />
+        </Suspense>
+      </ErrorBoundary>
+
+      <ErrorBoundary title="Couldn't load what fans also loved">
+        <Suspense fallback={<SectionSkeleton title="Fans also loved" height="h-64" />}>
+          <FansAlsoLoved movieId={movieId} title={movie.title} />
+        </Suspense>
+      </ErrorBoundary>
     </article>
+  )
+}
+
+function People({ movie }: { movie: MovieDetails }) {
+  if (movie.directors.length === 0 && movie.cast.length === 0) return null
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+      {movie.directors.length > 0 && (
+        <>
+          <dt className="text-zinc-500">Directed by</dt>
+          <dd>{movie.directors.join(", ")}</dd>
+        </>
+      )}
+      {movie.cast.length > 0 && (
+        <>
+          <dt className="text-zinc-500">Starring</dt>
+          <dd>{movie.cast.slice(0, 6).join(", ")}</dd>
+        </>
+      )}
+    </dl>
   )
 }
 

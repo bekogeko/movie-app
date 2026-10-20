@@ -1,10 +1,7 @@
 import Link from "next/link"
 
-import {
-  displayTitle,
-  searchMovies,
-  type MovieSearchResult,
-} from "@/lib/data/movies"
+import { searchMovies, type MovieSearchResult } from "@/lib/data/movies"
+import { displayTitle } from "@/lib/format"
 
 const LIMIT = 20
 

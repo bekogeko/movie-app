@@ -1,14 +1,7 @@
 import { cacheLife, cacheTag, io } from "next/cache"
 import neo4j from "neo4j-driver"
-import { cache } from "react"
 
 import { read } from "@/lib/neo4j"
-
-/** "Matrix, The" -> "The Matrix" (MovieLens-style titles move the article to the end). */
-export function displayTitle(title: string): string {
-  const match = title.match(/^(.+), (The|A|An|La|Le|Les|Il|El|Die|Der|Das)$/)
-  return match ? `${match[2]} ${match[1]}` : title
-}
 
 export type MovieSearchResult = {
   movieId: string
@@ -83,6 +76,7 @@ export async function searchMovies(
 export type MovieDetails = {
   movieId: string
   title: string
+  year: number | null
   plot: string | null
   /** "YYYY-MM-DD" */
   released: string | null
@@ -90,11 +84,16 @@ export type MovieDetails = {
   runtime: number | null
   imdbRating: number | null
   imdbVotes: number | null
+  genres: string[]
+  directors: string[]
+  cast: string[]
   countries: string[]
   languages: string[]
   /** Poster image URL on image.tmdb.org, or null when there isn't a usable one. */
   poster: string | null
 }
+
+export const MOVIES_CACHE_TAG = "movies"
 
 const POSTER_HOST = "image.tmdb.org"
 const POSTER_BASE = `https://${POSTER_HOST}/t/p/w500`
@@ -117,28 +116,46 @@ export function toPosterUrl(value: string | null): string | null {
   }
 }
 
+// Map projection keeps the large plotEmbedding property out of the result.
+const GET_MOVIE = `
+MATCH (m:Movie {movieId: $movieId})
+RETURN m {
+  .movieId, .title, .released, .runtime, .imdbRating, .imdbVotes, .poster,
+  year: coalesce(m.year, toInteger(left(toString(m.released), 4))),
+  plot: coalesce(m.plot, m.tagline),
+  genres: [(m)-[:IN_GENRE]->(g:Genre) | g.name],
+  directors: [(m)<-[:DIRECTED]-(d) | d.name],
+  cast: [(m)<-[:ACTED_IN]-(a) | a.name],
+  countries: coalesce(m.countries, []),
+  languages: coalesce(m.languages, [])
+} AS movie
+LIMIT 1
+`
+
+async function cachedMovie(movieId: string): Promise<MovieDetails | null> {
+  "use cache"
+  cacheLife("days")
+  cacheTag(MOVIES_CACHE_TAG)
+
+  const [row] = await read<{ movie: MovieDetails }>(GET_MOVIE, { movieId })
+  if (!row) return null
+  const { movie } = row
+  return {
+    ...movie,
+    genres: movie.genres ?? [],
+    directors: movie.directors ?? [],
+    cast: movie.cast ?? [],
+    poster: toPosterUrl(movie.poster),
+  }
+}
+
 /**
- * One movie by its `movieId`, or null if there is no such movie.
- *
- * Wrapped in React `cache` so the page and its generateMetadata share one
- * query per request.
+ * One movie by its `movieId`, or null if there is no such movie. Cached across
+ * requests (movie details rarely change), so the page and generateMetadata
+ * share one query.
  */
-export const getMovie = cache(
-  async (movieId: string): Promise<MovieDetails | null> => {
-    // Map projection keeps the large plotEmbedding property out of the result.
-    const [row] = await read<{ movie: MovieDetails }>(
-      `
-      MATCH (m:Movie {movieId: $movieId})
-      RETURN m {
-        .movieId, .title, .plot, .released, .runtime, .imdbRating, .imdbVotes,
-        .poster,
-        countries: coalesce(m.countries, []),
-        languages: coalesce(m.languages, [])
-      } AS movie
-      `,
-      { movieId },
-    )
-    if (!row) return null
-    return { ...row.movie, poster: toPosterUrl(row.movie.poster) }
-  },
-)
+export async function getMovie(movieId: string): Promise<MovieDetails | null> {
+  // Keep the cached query out of `next build` (see lib/data/stats.ts).
+  await io()
+  return cachedMovie(movieId)
+}
