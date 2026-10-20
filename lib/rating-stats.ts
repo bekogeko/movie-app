@@ -47,7 +47,7 @@ export const MIN_SHARED_FAN_SHARE = 0.1
 export const IMDB_GAP = 0.2
 
 /** Genres that only mark missing data in MovieLens. */
-const IGNORED_GENRES = new Set(["(no genres listed)"])
+export const IGNORED_GENRES = new Set(["(no genres listed)"])
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,6 +76,8 @@ export type RankedMovie = RatingSummary & {
   year: number | null
   genres: string[]
   imdbRating: number | null
+  /** Poster image URL, or null when there isn't a usable one. */
+  poster: string | null
   /** Weighted score, see weightedScore(). */
   score: number
 }
@@ -248,6 +250,28 @@ export function movieStanding(
     decade: decade === null ? null : { decade, rank: rankOf(movie.score, scores(sameDecade)) },
     imdb,
   }
+}
+
+/**
+ * One genre's ranked movies, best weighted score first, each with its rank in
+ * the genre. Ranks follow rankOf() (ties share a rank), so #3 here is the
+ * same #3 that "How it ranks" shows on the movie page.
+ */
+export function genreLeaderboard(
+  movies: RankedMovie[],
+  genre: string,
+): (RankedMovie & { rank: number })[] {
+  const sorted = movies
+    .filter((m) => m.genres.includes(genre))
+    .sort((a, b) => b.score - a.score || byCountThenTitle(a, b))
+
+  let rank = 0
+  return sorted.map((movie, i) => {
+    // Sorted best first, so a movie's rank is 1 + the number of movies before
+    // its first tie.
+    if (i === 0 || movie.score !== sorted[i - 1].score) rank = i + 1
+    return { ...movie, rank }
+  })
 }
 
 // ---------------------------------------------------------------------------

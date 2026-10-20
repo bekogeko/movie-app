@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag, io } from "next/cache"
 import neo4j from "neo4j-driver"
 
+import { toPosterUrl } from "@/lib/data/movies"
 import { read } from "@/lib/neo4j"
 import {
   agreement,
@@ -112,6 +113,7 @@ RETURN m {
   .title,
   year: ${YEAR("m")},
   .imdbRating,
+  .poster,
   genres: [(m)-[:IN_GENRE]->(g:Genre) | g.name]
 } AS movie, ratings, mean, sd, loved, disliked
 `
@@ -185,7 +187,7 @@ async function cachedRankableMovies(): Promise<RankedMovie[]> {
   const [baseline, rows] = await Promise.all([
     cachedCommunityBaseline(),
     read<{
-      movie: Pick<RankedMovie, "movieId" | "title" | "year" | "imdbRating" | "genres">
+      movie: Pick<RankedMovie, "movieId" | "title" | "year" | "imdbRating" | "poster" | "genres">
       ratings: number
       mean: number
       sd: number | null
@@ -201,6 +203,7 @@ async function cachedRankableMovies(): Promise<RankedMovie[]> {
   return rows.map(({ movie, ratings, mean, sd, loved, disliked }) => ({
     ...movie,
     genres: movie.genres ?? [],
+    poster: toPosterUrl(movie.poster),
     count: ratings,
     mean,
     sd,
@@ -294,6 +297,16 @@ async function cachedFansAlsoLoved(
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
+
+/**
+ * Every movie with MIN_RATINGS_TO_RANK+ ratings and its weighted score: the
+ * leaderboard all rankings are computed from. Genre lists build on it (see
+ * lib/data/genres.ts) so they rank exactly like "How it ranks".
+ */
+export async function getRankedMovies(): Promise<RankedMovie[]> {
+  await io()
+  return cachedRankableMovies()
+}
 
 /** Lists for the home page: hidden gems, most divisive, higher than on IMDb. */
 export async function getExploreStats(limit = 5): Promise<ExploreStats> {

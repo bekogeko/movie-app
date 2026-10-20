@@ -11,6 +11,7 @@ import {
   HowItRanks,
   SectionSkeleton,
 } from "@/components/movie-stats"
+import { genreHref } from "@/lib/data/genres"
 import { getMovie, type CreditName, type MovieDetails } from "@/lib/data/movies"
 import { personHref, type PersonKind } from "@/lib/data/people"
 import { displayTitle, formatDate } from "@/lib/format"
@@ -83,7 +84,19 @@ async function Movie({ movieId }: { movieId: string }) {
                 )}
               </h1>
               {genres.length > 0 && (
-                <p className="text-sm text-zinc-500">{genres.join(" · ")}</p>
+                <p className="text-sm text-zinc-500">
+                  {genres.map((genre, i) => (
+                    <Fragment key={genre}>
+                      {i > 0 && " · "}
+                      <Link
+                        href={genreHref(genre)}
+                        className="underline decoration-black/20 underline-offset-4 transition-colors hover:text-foreground hover:decoration-current dark:decoration-white/30"
+                      >
+                        {genre}
+                      </Link>
+                    </Fragment>
+                  ))}
+                </p>
               )}
             </div>
             <Rating movie={movie} />
