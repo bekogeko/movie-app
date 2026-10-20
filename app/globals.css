@@ -3,11 +3,27 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /*
+   * Chart colors. Blue and red are the two poles of a diverging pair (loved /
+   * disliked) with a neutral gray between; the histogram uses the blue alone.
+   * Checked for color-blind separation and 3:1 contrast on both backgrounds.
+   */
+  --viz-series: #2a78d6;
+  --viz-loved: #2a78d6;
+  --viz-disliked: #e34948;
+  --viz-neutral: #e4e3de;
+  --viz-baseline: #c3c2b7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-viz-series: var(--viz-series);
+  --color-viz-loved: var(--viz-loved);
+  --color-viz-disliked: var(--viz-disliked);
+  --color-viz-neutral: var(--viz-neutral);
+  --color-viz-baseline: var(--viz-baseline);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,6 +32,12 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    --viz-series: #3987e5;
+    --viz-loved: #3987e5;
+    --viz-disliked: #e66767;
+    --viz-neutral: #383835;
+    --viz-baseline: #44443f;
   }
 }
 
