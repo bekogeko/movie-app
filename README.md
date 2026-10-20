@@ -1,5 +1,24 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Setup
+
+Create a `.env` file:
+
+```bash
+NEO4J_URI=neo4j+s://<instance>.databases.neo4j.io   # or bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=...
+# NEO4J_DATABASE=neo4j    # optional, defaults to the user's home database
+
+# Signs the login session cookie. 32+ characters: openssl rand -base64 32
+SESSION_SECRET=...
+```
+
+Sign-up creates `(:User {userId, name, email, passwordHash})` nodes, so the
+database must be writable: your own instance with the recommendations dataset
+loaded, not the read-only demo.neo4jlabs.com server. A unique-email constraint
+and a `userId` index are created automatically on the first sign-up.
+
 ## Getting Started
 
 First, run the development server:
