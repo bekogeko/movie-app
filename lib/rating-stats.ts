@@ -34,8 +34,7 @@ export const DIVISIVE_SHARE = 0.25
 /** "Consensus": standard deviation at or below this (the tightest ~20% of movies). */
 export const CONSENSUS_MAX_SD = 0.8
 
-/** Hidden gems have fewer ratings than this; "most divisive" and the IMDb list need at least this many. */
-export const GEM_MAX_RATINGS = 30
+/** "Most divisive" and the IMDb list need at least this many ratings. */
 export const POPULAR_MIN_RATINGS = 30
 
 /** Fans-also-loved needs this many fans, and each pick needs this many shared fans (and this share of all fans). */
@@ -281,14 +280,6 @@ export function genreLeaderboard(
 /** Ties: more ratings first, then title, so lists are stable between runs. */
 function byCountThenTitle(a: RankedMovie, b: RankedMovie): number {
   return b.count - a.count || a.title.localeCompare(b.title)
-}
-
-/** Best weighted scores among movies few people have rated. */
-export function hiddenGems(movies: RankedMovie[], limit: number): RankedMovie[] {
-  return movies
-    .filter((m) => m.count < GEM_MAX_RATINGS)
-    .sort((a, b) => b.score - a.score || byCountThenTitle(a, b))
-    .slice(0, limit)
 }
 
 /** Movies where the "loved it" and "disliked it" camps are both big. */

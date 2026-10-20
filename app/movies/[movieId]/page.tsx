@@ -84,22 +84,8 @@ async function Movie({ movieId }: { movieId: string }) {
                   </span>
                 )}
               </h1>
-              {genres.length > 0 && (
-                <p className="text-sm text-zinc-500">
-                  {genres.map((genre, i) => (
-                    <Fragment key={genre}>
-                      {i > 0 && " · "}
-                      <Link
-                        href={genreHref(genre)}
-                        className="underline decoration-black/20 underline-offset-4 transition-colors hover:text-foreground hover:decoration-current dark:decoration-white/30"
-                      >
-                        {genre}
-                      </Link>
-                    </Fragment>
-                  ))}
-                </p>
-              )}
             </div>
+            <GenreLinks genres={genres} />
             <Rating movie={movie} />
             {/* Reads the session, so it streams in after the movie itself. */}
             <ErrorBoundary title="Couldn't load your rating">
@@ -154,6 +140,25 @@ async function Movie({ movieId }: { movieId: string }) {
         </Suspense>
       </ErrorBoundary>
     </article>
+  )
+}
+
+/** The movie's genres as chips, each linking to that genre's page. Same chip style as the genre page. */
+function GenreLinks({ genres }: { genres: string[] }) {
+  if (genres.length === 0) return null
+  return (
+    <ul aria-label="Genres" className="flex flex-wrap gap-2">
+      {genres.map((genre) => (
+        <li key={genre}>
+          <Link
+            href={genreHref(genre)}
+            className="block whitespace-nowrap rounded-full border border-black/[.08] px-3 py-1 text-sm transition-colors hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.05]"
+          >
+            {genre}
+          </Link>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -237,6 +242,11 @@ function MovieSkeleton() {
         <div className="flex flex-1 flex-col gap-6">
           <div className="flex flex-col gap-3">
             <div className={`h-9 w-2/3 ${bar}`} />
+            <div className="flex gap-2">
+              {[64, 80, 56].map((width, i) => (
+                <div key={i} className={`h-7 rounded-full ${bar}`} style={{ width }} />
+              ))}
+            </div>
             <div className={`h-7 w-48 ${bar}`} />
           </div>
           <div className="flex flex-col gap-2">

@@ -7,7 +7,7 @@ import { ExploreStats, ExploreStatsSkeleton } from "@/components/explore-stats"
 export const metadata: Metadata = {
   title: "What the ratings say · Movie App",
   description:
-    "Hidden gems, the most divisive movies, and where this community disagrees with IMDb.",
+    "The most divisive movies and where this community disagrees with IMDb.",
 }
 
 export default function StatsPage() {

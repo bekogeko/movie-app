@@ -38,8 +38,8 @@ export default function Home({ searchParams }: PageProps<"/">) {
         <span className="flex flex-col gap-1">
           <span className="font-medium">What the ratings say</span>
           <span className="text-sm text-zinc-600 dark:text-zinc-400">
-            Hidden gems, the most divisive movies, and where this community
-            disagrees with IMDb.
+            The most divisive movies and where this community disagrees with
+            IMDb.
           </span>
         </span>
         <span

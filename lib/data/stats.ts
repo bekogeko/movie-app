@@ -6,7 +6,6 @@ import { read } from "@/lib/neo4j"
 import {
   agreement,
   DISLIKED_AT,
-  hiddenGems,
   higherThanImdb,
   LOVED_AT,
   MIN_FANS,
@@ -52,7 +51,6 @@ export type ExploreStats = {
   baseline: CommunityBaseline
   /** How many movies have enough ratings to be ranked. */
   rankedCount: number
-  hiddenGems: RankedMovie[]
   mostDivisive: RankedMovie[]
   higherThanImdb: ImdbComparison[]
 }
@@ -225,7 +223,6 @@ async function cachedExploreStats(limit: number): Promise<ExploreStats> {
   return {
     baseline,
     rankedCount: movies.length,
-    hiddenGems: hiddenGems(movies, limit),
     mostDivisive: mostDivisive(movies, limit),
     higherThanImdb: higherThanImdb(movies, limit),
   }
@@ -308,7 +305,7 @@ export async function getRankedMovies(): Promise<RankedMovie[]> {
   return cachedRankableMovies()
 }
 
-/** Lists for the home page: hidden gems, most divisive, higher than on IMDb. */
+/** Lists for the /stats page: most divisive, higher than on IMDb. */
 export async function getExploreStats(limit = 5): Promise<ExploreStats> {
   await io()
   return cachedExploreStats(limit)
