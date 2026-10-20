@@ -1,6 +1,13 @@
 import neo4j from "neo4j-driver"
+import { cache } from "react"
 
 import { read } from "@/lib/neo4j"
+
+/** "Matrix, The" -> "The Matrix" (MovieLens-style titles move the article to the end). */
+export function displayTitle(title: string): string {
+  const match = title.match(/^(.+), (The|A|An|La|Le|Les|Il|El|Die|Der|Das)$/)
+  return match ? `${match[2]} ${match[1]}` : title
+}
 
 export type MovieSearchResult = {
   movieId: string
@@ -71,3 +78,41 @@ export async function searchMovies(
   })
   return rows.map((row) => row.movie)
 }
+
+export type MovieDetails = {
+  movieId: string
+  title: string
+  plot: string | null
+  /** "YYYY-MM-DD" */
+  released: string | null
+  /** Minutes */
+  runtime: number | null
+  imdbRating: number | null
+  imdbVotes: number | null
+  countries: string[]
+  languages: string[]
+}
+
+/**
+ * One movie by its `movieId`, or null if there is no such movie.
+ *
+ * Wrapped in React `cache` so the page and its generateMetadata share one
+ * query per request.
+ */
+export const getMovie = cache(
+  async (movieId: string): Promise<MovieDetails | null> => {
+    // Map projection keeps the large plotEmbedding property out of the result.
+    const [row] = await read<{ movie: MovieDetails }>(
+      `
+      MATCH (m:Movie {movieId: $movieId})
+      RETURN m {
+        .movieId, .title, .plot, .released, .runtime, .imdbRating, .imdbVotes,
+        countries: coalesce(m.countries, []),
+        languages: coalesce(m.languages, [])
+      } AS movie
+      `,
+      { movieId },
+    )
+    return row?.movie ?? null
+  },
+)
