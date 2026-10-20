@@ -7,6 +7,18 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  images: {
+    // Movie posters from the dataset (see toPosterUrl in lib/data/movies.ts).
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "image.tmdb.org",
+        port: "",
+        pathname: "/t/p/**",
+        search: "",
+      },
+    ],
+  },
   turbopack: {
     rules: {
       "*.css": {

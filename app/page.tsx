@@ -3,7 +3,7 @@ import { Suspense } from "react"
 import ErrorBoundary from "@/components/error-boundary"
 import { SearchResults } from "@/components/search-results"
 import { normalizeSearchQuery } from "@/lib/data/movies"
-import { getNodeCount } from "@/lib/data/stats"
+import { getMovieNodeCount } from "@/lib/data/stats"
 
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
@@ -41,15 +41,15 @@ export default function Home({ searchParams }: PageProps<"/">) {
 }
 
 async function NodeCount() {
-  const count = await getNodeCount()
-  return <StatCard label="Nodes in the graph" value={count.toLocaleString("en-US")} />
+  const count = await getMovieNodeCount()
+  return <StatCard label="Movies in the database" value={count.toLocaleString("en-US")} />
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-black/[.08] p-5 dark:border-white/[.145]">
       <p className="text-sm text-zinc-600 dark:text-zinc-400">{label}</p>
-      <p className="mt-1 font-mono text-4xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">{value}</p>
     </div>
   )
 }
