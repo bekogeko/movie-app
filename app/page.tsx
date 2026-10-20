@@ -1,7 +1,7 @@
+import Link from "next/link"
 import { Suspense } from "react"
 
 import ErrorBoundary from "@/components/error-boundary"
-import { ExploreStats, ExploreStatsSkeleton } from "@/components/explore-stats"
 import { SearchResults } from "@/components/search-results"
 import { normalizeSearchQuery } from "@/lib/data/movies"
 
@@ -29,11 +29,24 @@ export default function Home({ searchParams }: PageProps<"/">) {
         })}
       </Suspense>
 
-      <ErrorBoundary title="Couldn't reach Neo4j">
-        <Suspense fallback={<ExploreStatsSkeleton />}>
-          <ExploreStats />
-        </Suspense>
-      </ErrorBoundary>
+      <Link
+        href="/stats"
+        className="group/stats flex items-center justify-between gap-6 rounded-xl border border-black/[.08] p-5 transition-colors hover:bg-black/[.03] focus-visible:bg-black/[.03] focus-visible:outline-none dark:border-white/[.145] dark:hover:bg-white/[.05] dark:focus-visible:bg-white/[.05]"
+      >
+        <span className="flex flex-col gap-1">
+          <span className="font-medium">What the ratings say</span>
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            Hidden gems, the most divisive movies, and where this community
+            disagrees with IMDb.
+          </span>
+        </span>
+        <span
+          aria-hidden
+          className="shrink-0 text-zinc-500 transition-transform group-hover/stats:translate-x-0.5"
+        >
+          →
+        </span>
+      </Link>
     </main>
   )
 }

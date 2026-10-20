@@ -17,26 +17,21 @@ import {
 const muted = "text-zinc-600 dark:text-zinc-400"
 
 /*
- * Home page lists built from the community's ratings. Each one answers a
- * question a raw "most rated" list can't: what's great but overlooked, what
- * splits people, and where this crowd disagrees with IMDb.
+ * The /stats page: lists built from the community's ratings. Each one
+ * answers a question a raw "most rated" list can't: what's great but
+ * overlooked, what splits people, and where this crowd disagrees with IMDb.
  */
-export async function ExploreStats() {
-  const stats = await getExploreStats(5)
+export async function ExploreStats({ limit = 8 }: { limit?: number }) {
+  const stats = await getExploreStats(limit)
   const { baseline } = stats
 
   return (
-    <section aria-labelledby="explore-heading" className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h2 id="explore-heading" className="text-lg font-semibold tracking-tight">
-          What the ratings say
-        </h2>
-        <p className={`text-sm ${muted}`}>
-          {baseline.ratings > 0
-            ? `From ${plural(baseline.ratings, "rating")} by ${plural(baseline.users, "user")}. Only movies with ${MIN_RATINGS_TO_RANK}+ ratings (${formatCount(stats.rankedCount)} of them) are ranked.`
-            : "Nobody has rated anything yet."}
-        </p>
-      </div>
+    <div className="flex flex-col gap-10">
+      <p className={`text-sm ${muted}`}>
+        {baseline.ratings > 0
+          ? `From ${plural(baseline.ratings, "rating")} by ${plural(baseline.users, "user")}. Only movies with ${MIN_RATINGS_TO_RANK}+ ratings (${formatCount(stats.rankedCount)} of them) are ranked.`
+          : "Nobody has rated anything yet."}
+      </p>
 
       {stats.hiddenGems.length > 0 && (
         <ExploreList
@@ -83,7 +78,7 @@ export async function ExploreStats() {
           ))}
         </ExploreList>
       )}
-    </section>
+    </div>
   )
 }
 
@@ -97,15 +92,15 @@ function ExploreList({
   children: ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-0.5">
-        <h3 className="font-medium">{title}</h3>
-        <p className="text-sm text-zinc-500">{detail}</p>
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        <p className={`text-sm ${muted}`}>{detail}</p>
       </div>
       <ol className="divide-y divide-black/[.08] overflow-hidden rounded-xl border border-black/[.08] dark:divide-white/[.145] dark:border-white/[.145]">
         {children}
       </ol>
-    </div>
+    </section>
   )
 }
 
@@ -147,17 +142,14 @@ function ExploreRow({
 
 export function ExploreStatsSkeleton() {
   return (
-    <section className="flex flex-col gap-6" aria-busy>
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold tracking-tight">What the ratings say</h2>
-        <div className="h-5 w-72 max-w-full animate-pulse rounded-md bg-black/[.06] dark:bg-white/[.08]" />
-      </div>
+    <div className="flex flex-col gap-10" aria-busy>
+      <div className="h-5 w-80 max-w-full animate-pulse rounded-md bg-black/[.06] dark:bg-white/[.08]" />
       {["Hidden gems", "Most divisive"].map((title) => (
-        <div key={title} className="flex flex-col gap-3">
-          <h3 className="font-medium">{title}</h3>
-          <div className="h-64 animate-pulse rounded-xl bg-black/[.04] dark:bg-white/[.06]" />
-        </div>
+        <section key={title} className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          <div className="h-96 animate-pulse rounded-xl bg-black/[.04] dark:bg-white/[.06]" />
+        </section>
       ))}
-    </section>
+    </div>
   )
 }
