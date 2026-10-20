@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { searchMovies, type MovieSearchResult } from "@/lib/data/movies"
+import { displayTitle } from "@/lib/format"
 
 const LIMIT = 20
 
@@ -63,10 +64,4 @@ function MovieRow({ movie }: { movie: MovieSearchResult }) {
       </Link>
     </li>
   )
-}
-
-/** "Matrix, The" -> "The Matrix" (MovieLens-style titles move the article to the end). */
-function displayTitle(title: string): string {
-  const match = title.match(/^(.+), (The|A|An|La|Le|Les|Il|El|Die|Der|Das)$/)
-  return match ? `${match[2]} ${match[1]}` : title
 }

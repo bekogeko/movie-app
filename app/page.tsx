@@ -1,9 +1,9 @@
 import { Suspense } from "react"
 
 import ErrorBoundary from "@/components/error-boundary"
+import { ExploreStats, ExploreStatsSkeleton } from "@/components/explore-stats"
 import { SearchResults } from "@/components/search-results"
 import { normalizeSearchQuery } from "@/lib/data/movies"
-import { getNodeCount } from "@/lib/data/stats"
 
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
@@ -29,36 +29,11 @@ export default function Home({ searchParams }: PageProps<"/">) {
         })}
       </Suspense>
 
-      <section className="grid gap-4 sm:grid-cols-2">
-        <ErrorBoundary title="Couldn't reach Neo4j">
-          <Suspense fallback={<StatCardSkeleton label="Nodes in the graph" />}>
-            <NodeCount />
-          </Suspense>
-        </ErrorBoundary>
-      </section>
+      <ErrorBoundary title="Couldn't reach Neo4j">
+        <Suspense fallback={<ExploreStatsSkeleton />}>
+          <ExploreStats />
+        </Suspense>
+      </ErrorBoundary>
     </main>
-  )
-}
-
-async function NodeCount() {
-  const count = await getNodeCount()
-  return <StatCard label="Nodes in the graph" value={count.toLocaleString("en-US")} />
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-black/[.08] p-5 dark:border-white/[.145]">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{label}</p>
-      <p className="mt-1 font-mono text-4xl font-semibold tabular-nums">{value}</p>
-    </div>
-  )
-}
-
-function StatCardSkeleton({ label }: { label: string }) {
-  return (
-    <div className="rounded-xl border border-black/[.08] p-5 dark:border-white/[.145]">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{label}</p>
-      <div className="mt-2 h-9 w-32 animate-pulse rounded-md bg-black/[.06] dark:bg-white/[.08]" />
-    </div>
   )
 }

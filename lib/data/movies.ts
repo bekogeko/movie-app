@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag, io } from "next/cache"
 import neo4j from "neo4j-driver"
 
 import { read } from "@/lib/neo4j"
@@ -70,4 +71,62 @@ export async function searchMovies(
     limit: neo4j.int(limit),
   })
   return rows.map((row) => row.movie)
+}
+
+export type MovieDetails = {
+  movieId: string
+  title: string
+  year: number | null
+  runtime: number | null
+  imdbRating: number | null
+  imdbVotes: number | null
+  plot: string | null
+  genres: string[]
+  directors: string[]
+  cast: string[]
+}
+
+export const MOVIES_CACHE_TAG = "movies"
+
+const GET_MOVIE = `
+MATCH (m:Movie {movieId: $movieId})
+RETURN m {
+  .movieId,
+  .title,
+  year: coalesce(m.year, toInteger(left(toString(m.released), 4))),
+  .runtime,
+  .imdbRating,
+  .imdbVotes,
+  plot: coalesce(m.plot, m.tagline),
+  genres: [(m)-[:IN_GENRE]->(g:Genre) | g.name],
+  directors: [(m)<-[:DIRECTED]-(d) | d.name],
+  cast: [(m)<-[:ACTED_IN]-(a) | a.name]
+} AS movie
+LIMIT 1
+`
+
+async function cachedMovie(movieId: string): Promise<MovieDetails | null> {
+  "use cache"
+  cacheLife("days")
+  cacheTag(MOVIES_CACHE_TAG)
+
+  const [row] = await read<{ movie: MovieDetails }>(GET_MOVIE, { movieId })
+  if (!row) return null
+  const { movie } = row
+  return {
+    ...movie,
+    genres: movie.genres ?? [],
+    directors: movie.directors ?? [],
+    cast: movie.cast ?? [],
+  }
+}
+
+/**
+ * One movie's details, or null if there's no movie with that id. Cached, so
+ * the page and generateMetadata share one query.
+ */
+export async function getMovie(movieId: string): Promise<MovieDetails | null> {
+  // Keep the cached query out of `next build` (see lib/data/stats.ts).
+  await io()
+  return cachedMovie(movieId)
 }
