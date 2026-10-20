@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { notFound, unstable_rethrow } from "next/navigation"
-import { Suspense } from "react"
+import { Fragment, Suspense } from "react"
 
 import ErrorBoundary from "@/components/error-boundary"
-import { MovieCredits, MovieCreditsSkeleton } from "@/components/movie-credits"
 import { MoviePoster, MoviePosterSkeleton } from "@/components/movie-poster"
 import {
   CommunityRating,
@@ -11,7 +11,8 @@ import {
   HowItRanks,
   SectionSkeleton,
 } from "@/components/movie-stats"
-import { getMovie, type MovieDetails } from "@/lib/data/movies"
+import { getMovie, type CreditName, type MovieDetails } from "@/lib/data/movies"
+import { personHref, type PersonKind } from "@/lib/data/people"
 import { displayTitle, formatDate } from "@/lib/format"
 
 // Poster width: w-40 on phones, sm:w-48 from 640px up. Keep POSTER_SIZES in sync.
@@ -115,12 +116,6 @@ async function Movie({ movieId }: { movieId: string }) {
       </dl>
 
       {/* Each section below loads and fails on its own, so one slow query doesn't hold up the rest. */}
-      <ErrorBoundary title="Couldn't load the cast">
-        <Suspense fallback={<MovieCreditsSkeleton />}>
-          <MovieCredits movieId={movie.movieId} />
-        </Suspense>
-      </ErrorBoundary>
-
       <ErrorBoundary title="Couldn't load the community rating">
         <Suspense fallback={<SectionSkeleton title="Community rating" height="h-72" />}>
           <CommunityRating movieId={movieId} />
@@ -149,17 +144,40 @@ function People({ movie }: { movie: MovieDetails }) {
       {movie.directors.length > 0 && (
         <>
           <dt className="text-zinc-500">Directed by</dt>
-          <dd>{movie.directors.join(", ")}</dd>
+          <dd>
+            <PersonLinks kind="director" people={movie.directors} />
+          </dd>
         </>
       )}
       {movie.cast.length > 0 && (
         <>
           <dt className="text-zinc-500">Starring</dt>
-          <dd>{movie.cast.slice(0, 6).join(", ")}</dd>
+          <dd>
+            <PersonLinks kind="actor" people={movie.cast.slice(0, 6)} />
+          </dd>
         </>
       )}
     </dl>
   )
+}
+
+/** Comma-separated names, each linking to that person's actor or director page. */
+function PersonLinks({ kind, people }: { kind: PersonKind; people: CreditName[] }) {
+  return people.map((person, i) => (
+    <Fragment key={person.tmdbId ?? person.name}>
+      {i > 0 && ", "}
+      {person.tmdbId ? (
+        <Link
+          href={personHref(kind, person.tmdbId)}
+          className="underline decoration-black/20 underline-offset-4 transition-colors hover:decoration-current dark:decoration-white/30"
+        >
+          {person.name}
+        </Link>
+      ) : (
+        person.name
+      )}
+    </Fragment>
+  ))
 }
 
 function Rating({ movie }: { movie: MovieDetails }) {

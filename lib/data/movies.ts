@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag, io } from "next/cache"
 import neo4j from "neo4j-driver"
 
+import { uniqueBy } from "@/lib/collections"
 import { read } from "@/lib/neo4j"
 
 export type MovieSearchResult = {
@@ -73,6 +74,12 @@ export async function searchMovies(
   return rows.map((row) => row.movie)
 }
 
+/** A director or cast member, with the `tmdbId` their page is keyed by (null if the dataset has none). */
+export type CreditName = {
+  tmdbId: string | null
+  name: string
+}
+
 export type MovieDetails = {
   movieId: string
   title: string
@@ -85,8 +92,8 @@ export type MovieDetails = {
   imdbRating: number | null
   imdbVotes: number | null
   genres: string[]
-  directors: string[]
-  cast: string[]
+  directors: CreditName[]
+  cast: CreditName[]
   countries: string[]
   languages: string[]
   /** Poster image URL on image.tmdb.org, or null when there isn't a usable one. */
@@ -124,8 +131,8 @@ RETURN m {
   year: coalesce(m.year, toInteger(left(toString(m.released), 4))),
   plot: coalesce(m.plot, m.tagline),
   genres: [(m)-[:IN_GENRE]->(g:Genre) | g.name],
-  directors: [(m)<-[:DIRECTED]-(d) | d.name],
-  cast: [(m)<-[:ACTED_IN]-(a) | a.name],
+  directors: [(m)<-[:DIRECTED]-(d:Director) | d { .tmdbId, .name }],
+  cast: [(m)<-[:ACTED_IN]-(a:Actor) | a { .tmdbId, .name }],
   countries: coalesce(m.countries, []),
   languages: coalesce(m.languages, [])
 } AS movie
@@ -143,10 +150,14 @@ async function cachedMovie(movieId: string): Promise<MovieDetails | null> {
   return {
     ...movie,
     genres: movie.genres ?? [],
-    directors: movie.directors ?? [],
-    cast: movie.cast ?? [],
+    directors: uniqueCredits(movie.directors),
+    cast: uniqueCredits(movie.cast),
     poster: toPosterUrl(movie.poster),
   }
+}
+
+function uniqueCredits(people: CreditName[] | null): CreditName[] {
+  return uniqueBy(people ?? [], (p) => p.tmdbId ?? p.name)
 }
 
 /**

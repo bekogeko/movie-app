@@ -1,5 +1,6 @@
 import { cache } from "react"
 
+import { uniqueBy } from "@/lib/collections"
 import { toPosterUrl } from "@/lib/data/movies"
 import { read } from "@/lib/neo4j"
 
@@ -15,49 +16,6 @@ export type PersonKind = "actor" | "director"
 export function personHref(kind: PersonKind, tmdbId: string): string {
   return `/${kind === "actor" ? "actors" : "directors"}/${encodeURIComponent(tmdbId)}`
 }
-
-// ---------------------------------------------------------------------------
-// Movie page: who directed it and who is in it
-// ---------------------------------------------------------------------------
-
-export type CreditedPerson = {
-  tmdbId: string
-  name: string
-  /** Photo URL on image.tmdb.org, or null. */
-  photo: string | null
-  /** Character played (cast only). */
-  role: string | null
-}
-
-export type MovieCredits = {
-  directors: CreditedPerson[]
-  cast: CreditedPerson[]
-}
-
-const MOVIE_CREDITS = `
-MATCH (m:Movie {movieId: $movieId})
-RETURN
-  [(p:Director)-[:DIRECTED]->(m) WHERE p.tmdbId IS NOT NULL |
-    p { .tmdbId, .name, photo: p.poster, role: null }] AS directors,
-  [(p:Actor)-[r:ACTED_IN]->(m) WHERE p.tmdbId IS NOT NULL |
-    p { .tmdbId, .name, photo: p.poster, role: r.role }] AS actors
-`
-
-/** Directors and cast of one movie. Empty lists if the movie doesn't exist. */
-export const getMovieCredits = cache(
-  async (movieId: string): Promise<MovieCredits> => {
-    const [row] = await read<{ directors: CreditedPerson[]; actors: CreditedPerson[] }>(
-      MOVIE_CREDITS,
-      { movieId },
-    )
-    if (!row) return { directors: [], cast: [] }
-
-    const clean = (people: CreditedPerson[]) =>
-      uniqueBy(people, (p) => p.tmdbId).map((p) => ({ ...p, photo: toPosterUrl(p.photo) }))
-
-    return { directors: clean(row.directors), cast: clean(row.actors) }
-  },
-)
 
 // ---------------------------------------------------------------------------
 // Person pages: one person and the movies they acted in or directed
@@ -144,16 +102,3 @@ export const getPerson = cache(
     }
   },
 )
-
-// ---------------------------------------------------------------------------
-
-/** Keep the first item for each key, so a duplicate relationship can't repeat a row (or a React key). */
-function uniqueBy<T>(items: T[], key: (item: T) => string): T[] {
-  const seen = new Set<string>()
-  return items.filter((item) => {
-    const k = key(item)
-    if (seen.has(k)) return false
-    seen.add(k)
-    return true
-  })
-}
