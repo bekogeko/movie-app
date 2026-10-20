@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Suspense } from "react"
 
 import ErrorBoundary from "@/components/error-boundary"
+import { GenreRows, GenreRowsSkeleton } from "@/components/genre-rows"
 import { SearchResults } from "@/components/search-results"
 import { normalizeSearchQuery } from "@/lib/data/movies"
 import { getMovieNodeCount } from "@/lib/data/stats"
@@ -56,6 +57,12 @@ export default function Home({ searchParams }: PageProps<"/">) {
           </Suspense>
         </ErrorBoundary>
       </section>
+
+      <ErrorBoundary title="Couldn't load the genre lists">
+        <Suspense fallback={<GenreRowsSkeleton />}>
+          <GenreRows />
+        </Suspense>
+      </ErrorBoundary>
     </main>
   )
 }
