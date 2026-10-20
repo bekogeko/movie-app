@@ -28,9 +28,9 @@ import {
 /*
  * Data layer for the rating stats. Every function here aggregates over RATED
  * relationships, so results are cached with "use cache" and tagged
- * RATINGS_CACHE_TAG. When saving ratings lands, call
- * `updateTag(RATINGS_CACHE_TAG)` in that Server Action so the stats include
- * the new rating on the next request.
+ * RATINGS_CACHE_TAG. The rating Server Actions (lib/actions/ratings.ts) call
+ * `updateTag(RATINGS_CACHE_TAG)`, so the stats include a new rating on the
+ * next request.
  *
  * Each exported function awaits io() before entering its cache scope. Inside
  * "use cache", read()'s own io() is a no-op, so without this the cached query

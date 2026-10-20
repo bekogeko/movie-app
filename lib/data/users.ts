@@ -107,6 +107,24 @@ export async function findUserById(userId: string): Promise<User | null> {
   return row?.user ?? null
 }
 
+export type Account = User & {
+  email: string
+  /** ISO date-time the account was created. */
+  createdAt: string | null
+}
+
+/** The signed-in user's own account details, for their profile page. */
+export async function findAccount(userId: string): Promise<Account | null> {
+  const [row] = await read<{ account: Account }>(
+    `MATCH (u:User {userId: $userId})
+     WHERE u.email IS NOT NULL
+     RETURN u { .userId, .name, .email, .createdAt } AS account
+     LIMIT 1`,
+    { userId },
+  )
+  return row?.account ?? null
+}
+
 /** For checking a login. The hash must never leave the server. */
 export async function findUserForLogin(email: string): Promise<UserWithPasswordHash | null> {
   const [row] = await read<{ user: UserWithPasswordHash }>(

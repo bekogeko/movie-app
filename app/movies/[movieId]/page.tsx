@@ -11,6 +11,7 @@ import {
   HowItRanks,
   SectionSkeleton,
 } from "@/components/movie-stats"
+import { YourRating, YourRatingSkeleton } from "@/components/your-rating"
 import { getMovie, type CreditName, type MovieDetails } from "@/lib/data/movies"
 import { personHref, type PersonKind } from "@/lib/data/people"
 import { displayTitle, formatDate } from "@/lib/format"
@@ -87,6 +88,12 @@ async function Movie({ movieId }: { movieId: string }) {
               )}
             </div>
             <Rating movie={movie} />
+            {/* Reads the session, so it streams in after the movie itself. */}
+            <ErrorBoundary title="Couldn't load your rating">
+              <Suspense fallback={<YourRatingSkeleton />}>
+                <YourRating movieId={movieId} />
+              </Suspense>
+            </ErrorBoundary>
           </header>
 
           {movie.plot && (
