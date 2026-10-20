@@ -100,12 +100,12 @@ const POSTER_HOST = "image.tmdb.org"
 const POSTER_BASE = `https://${POSTER_HOST}/t/p/w500`
 
 /*
- * The dataset stores posters as TMDB image URLs. Only URLs on the host allowed
- * by `images.remotePatterns` in next.config.ts are returned: next/image throws
- * on any other host, which would take the whole page down. A bare TMDB path
- * ("/abc.jpg") is expanded to a full URL.
+ * The dataset stores posters (and people's photos) as TMDB image URLs. Only
+ * URLs on the host allowed by `images.remotePatterns` in next.config.ts are
+ * returned: next/image throws on any other host, which would take the whole
+ * page down. A bare TMDB path ("/abc.jpg") is expanded to a full URL.
  */
-function toPosterUrl(value: string | null): string | null {
+export function toPosterUrl(value: string | null): string | null {
   if (!value) return null
   try {
     const url = new URL(value.startsWith("/") ? `${POSTER_BASE}${value}` : value)
