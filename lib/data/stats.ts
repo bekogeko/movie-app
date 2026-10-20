@@ -319,3 +319,11 @@ export async function getFansAlsoLoved(
   await io()
   return cachedFansAlsoLoved(movieId, limit)
 }
+
+export async function getMovieNodeCount(): Promise<number> {
+  const [row] = await read<{ count: number }>(
+      "Match (n:Movie) return count(n) as count"
+  )
+
+  return row?.count ?? 0;
+}
