@@ -3,7 +3,12 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 import ErrorBoundary from "@/components/error-boundary"
+import { MoviePoster, MoviePosterSkeleton } from "@/components/movie-poster"
 import { displayTitle, getMovie, type MovieDetails } from "@/lib/data/movies"
+
+// Poster width: w-40 on phones, sm:w-48 from 640px up. Keep POSTER_SIZES in sync.
+const POSTER_WIDTH = "w-40 shrink-0 sm:w-48"
+const POSTER_SIZES = "(min-width: 640px) 192px, 160px"
 
 export async function generateMetadata({
   params,
@@ -38,21 +43,31 @@ export default function MoviePage({ params }: PageProps<"/movies/[movieId]">) {
 async function Movie({ movieId }: { movieId: string }) {
   const movie = await getMovie(movieId)
   if (!movie) notFound()
+  const title = displayTitle(movie.title)
 
   return (
     <article className="flex flex-col gap-10">
-      <header className="flex flex-col gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {displayTitle(movie.title)}
-        </h1>
-        <Rating movie={movie} />
-      </header>
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+        <MoviePoster
+          src={movie.poster}
+          alt={`Poster for ${title}`}
+          sizes={POSTER_SIZES}
+          className={POSTER_WIDTH}
+        />
 
-      {movie.plot && (
-        <p className="text-lg leading-relaxed text-zinc-700 dark:text-zinc-300">
-          {movie.plot}
-        </p>
-      )}
+        <div className="flex flex-col gap-6">
+          <header className="flex flex-col gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+            <Rating movie={movie} />
+          </header>
+
+          {movie.plot && (
+            <p className="text-lg leading-relaxed text-zinc-700 dark:text-zinc-300">
+              {movie.plot}
+            </p>
+          )}
+        </div>
+      </div>
 
       <dl className="grid gap-4 sm:grid-cols-2">
         <Detail label="Released" value={formatDate(movie.released)} />
@@ -105,13 +120,18 @@ function MovieSkeleton() {
   const bar = "animate-pulse rounded-md bg-black/[.06] dark:bg-white/[.08]"
   return (
     <div className="flex flex-col gap-10" aria-busy="true">
-      <div className="flex flex-col gap-3">
-        <div className={`h-9 w-2/3 ${bar}`} />
-        <div className={`h-7 w-48 ${bar}`} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className={`h-5 w-full ${bar}`} />
-        <div className={`h-5 w-5/6 ${bar}`} />
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+        <MoviePosterSkeleton className={POSTER_WIDTH} />
+        <div className="flex flex-1 flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <div className={`h-9 w-2/3 ${bar}`} />
+            <div className={`h-7 w-48 ${bar}`} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className={`h-5 w-full ${bar}`} />
+            <div className={`h-5 w-5/6 ${bar}`} />
+          </div>
+        </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {["Released", "Runtime", "Country", "Language"].map((label) => (

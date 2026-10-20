@@ -91,6 +91,29 @@ export type MovieDetails = {
   imdbVotes: number | null
   countries: string[]
   languages: string[]
+  /** Poster image URL on image.tmdb.org, or null when there isn't a usable one. */
+  poster: string | null
+}
+
+const POSTER_HOST = "image.tmdb.org"
+const POSTER_BASE = `https://${POSTER_HOST}/t/p/w500`
+
+/*
+ * The dataset stores posters as TMDB image URLs. Only URLs on the host allowed
+ * by `images.remotePatterns` in next.config.ts are returned: next/image throws
+ * on any other host, which would take the whole page down. A bare TMDB path
+ * ("/abc.jpg") is expanded to a full URL.
+ */
+function toPosterUrl(value: string | null): string | null {
+  if (!value) return null
+  try {
+    const url = new URL(value.startsWith("/") ? `${POSTER_BASE}${value}` : value)
+    url.protocol = "https:"
+    const allowed = url.hostname === POSTER_HOST && url.pathname.startsWith("/t/p/")
+    return allowed && !url.search ? url.toString() : null
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -107,12 +130,14 @@ export const getMovie = cache(
       MATCH (m:Movie {movieId: $movieId})
       RETURN m {
         .movieId, .title, .plot, .released, .runtime, .imdbRating, .imdbVotes,
+        .poster,
         countries: coalesce(m.countries, []),
         languages: coalesce(m.languages, [])
       } AS movie
       `,
       { movieId },
     )
-    return row?.movie ?? null
+    if (!row) return null
+    return { ...row.movie, poster: toPosterUrl(row.movie.poster) }
   },
 )
