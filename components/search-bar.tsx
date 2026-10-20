@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useTransition } from "react"
 
 const DEBOUNCE_MS = 300
@@ -22,7 +22,6 @@ export function SearchBar() {
  */
 export function SearchForm({ defaultQuery = "" }: { defaultQuery?: string }) {
   const router = useRouter()
-  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -36,7 +35,10 @@ export function SearchForm({ defaultQuery = "" }: { defaultQuery?: string }) {
     startTransition(() => {
       // On the home page, replace the history entry so Back doesn't step
       // through every keystroke. From any other page, searching is a new visit.
-      if (pathname === "/") router.replace(href, { scroll: false })
+      // The path is read here, not with usePathname(): this form is the
+      // layout's Suspense fallback, and on dynamic routes like /movies/[movieId]
+      // usePathname() would suspend during prerendering and fail the build.
+      if (window.location.pathname === "/") router.replace(href, { scroll: false })
       else router.push(href)
     })
   }
