@@ -3,7 +3,7 @@ import neo4j from "neo4j-driver"
 import { read } from "@/lib/neo4j"
 
 export type MovieSearchResult = {
-  id: string
+  movieId: string
   title: string
   year: number | null
   summary: string | null
@@ -44,7 +44,7 @@ WITH m, title, coalesce(m.imdbVotes, 0) AS votes,
 ORDER BY rank, votes DESC, title
 LIMIT $limit
 RETURN m {
-  id: elementId(m),
+  .movieId,
   .title,
   year: coalesce(m.year, toInteger(left(toString(m.released), 4))),
   summary: coalesce(m.plot, m.tagline),

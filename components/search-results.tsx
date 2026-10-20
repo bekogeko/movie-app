@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { searchMovies, type MovieSearchResult } from "@/lib/data/movies"
 
 const LIMIT = 20
@@ -20,9 +22,9 @@ export async function SearchResults({ query }: { query: string }) {
       </p>
 
       {movies.length > 0 && (
-        <ul className="divide-y divide-black/[.08] rounded-xl border border-black/[.08] dark:divide-white/[.145] dark:border-white/[.145]">
+        <ul className="divide-y divide-black/[.08] overflow-hidden rounded-xl border border-black/[.08] dark:divide-white/[.145] dark:border-white/[.145]">
           {movies.map((movie) => (
-            <MovieRow key={movie.id} movie={movie} />
+            <MovieRow key={movie.movieId} movie={movie} />
           ))}
         </ul>
       )}
@@ -37,23 +39,28 @@ function MovieRow({ movie }: { movie: MovieSearchResult }) {
   ].filter(Boolean)
 
   return (
-    <li className="flex flex-col gap-1 p-4">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-medium">{displayTitle(movie.title)}</h2>
-        {movie.year != null && (
-          <span className="shrink-0 font-mono text-sm tabular-nums text-zinc-500">
-            {movie.year}
-          </span>
+    <li>
+      <Link
+        href={`/movies/${encodeURIComponent(movie.movieId)}`}
+        className="flex flex-col gap-1 p-4 transition-colors hover:bg-black/[.03] focus-visible:bg-black/[.03] focus-visible:outline-none dark:hover:bg-white/[.05] dark:focus-visible:bg-white/[.05]"
+      >
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="font-medium">{displayTitle(movie.title)}</h2>
+          {movie.year != null && (
+            <span className="shrink-0 font-mono text-sm tabular-nums text-zinc-500">
+              {movie.year}
+            </span>
+          )}
+        </div>
+        {details.length > 0 && (
+          <p className="text-xs text-zinc-500">{details.join(" · ")}</p>
         )}
-      </div>
-      {details.length > 0 && (
-        <p className="text-xs text-zinc-500">{details.join(" · ")}</p>
-      )}
-      {movie.summary && (
-        <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
-          {movie.summary}
-        </p>
-      )}
+        {movie.summary && (
+          <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
+            {movie.summary}
+          </p>
+        )}
+      </Link>
     </li>
   )
 }
