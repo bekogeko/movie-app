@@ -18,11 +18,14 @@ export function MoviePoster({
   alt,
   sizes,
   className = "",
+  loading = "eager",
 }: {
   src: string | null
   alt: string
   sizes: string
   className?: string
+  /** "lazy" for posters in long lists below the fold. */
+  loading?: "eager" | "lazy"
 }) {
   // Remember which URL failed rather than a boolean, so a new src gets a fresh try.
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
@@ -35,8 +38,8 @@ export function MoviePoster({
           alt={alt}
           fill
           sizes={sizes}
-          // Above the fold on the movie page, so don't wait for lazy loading.
-          loading="eager"
+          // Eager by default: above the fold on the movie page.
+          loading={loading}
           className="object-cover"
           onError={() => setFailedSrc(src)}
         />

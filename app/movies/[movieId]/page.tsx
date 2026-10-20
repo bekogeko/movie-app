@@ -3,8 +3,10 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 import ErrorBoundary from "@/components/error-boundary"
+import { MovieCredits, MovieCreditsSkeleton } from "@/components/movie-credits"
 import { MoviePoster, MoviePosterSkeleton } from "@/components/movie-poster"
 import { displayTitle, getMovie, type MovieDetails } from "@/lib/data/movies"
+import { formatDate } from "@/lib/format"
 
 // Poster width: w-40 on phones, sm:w-48 from 640px up. Keep POSTER_SIZES in sync.
 const POSTER_WIDTH = "w-40 shrink-0 sm:w-48"
@@ -84,6 +86,13 @@ async function Movie({ movieId }: { movieId: string }) {
           value={movie.languages.join(", ")}
         />
       </dl>
+
+      {/* Streams in after the movie; a failure here leaves the rest of the page up. */}
+      <ErrorBoundary title="Couldn't load the cast">
+        <Suspense fallback={<MovieCreditsSkeleton />}>
+          <MovieCredits movieId={movie.movieId} />
+        </Suspense>
+      </ErrorBoundary>
     </article>
   )
 }
@@ -146,17 +155,4 @@ function MovieSkeleton() {
       </div>
     </div>
   )
-}
-
-// `released` is stored as a "YYYY-MM-DD" string; show the raw value if it isn't one.
-function formatDate(released: string | null) {
-  if (!released) return null
-  const date = new Date(`${released}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) return released
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  })
 }

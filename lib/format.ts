@@ -9,6 +9,19 @@ export function displayTitle(title: string): string {
   return match ? `${match[2]} ${match[1]}${match[3] ?? ""}` : title
 }
 
+/** "1995-11-22" -> "November 22, 1995". Shows the raw value if it isn't a date. */
+export function formatDate(value: string | null): string | null {
+  if (!value) return null
+  const date = new Date(`${value.slice(0, 10)}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  })
+}
+
 const integer = new Intl.NumberFormat("en-US")
 
 /** 100004 -> "100,004" */
