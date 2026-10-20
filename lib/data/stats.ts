@@ -6,9 +6,9 @@ import { read } from "@/lib/neo4j"
  * Route Handlers / queryFns behind React Query can call the same functions.
  */
 
-export async function getNodeCount(): Promise<number> {
+export async function getMovieNodeCount(): Promise<number> {
   const [row] = await read<{ count: number }>(
-    "MATCH (n) RETURN count(n) AS count",
+    "MATCH (n:Movie) RETURN count(n) AS count",
   )
   return row?.count ?? 0
 }
